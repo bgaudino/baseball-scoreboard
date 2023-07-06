@@ -105,6 +105,11 @@ th {
 
 .taken {
   background-color: yellow;
+  cursor: pointer;
+}
+
+.taken:hover {
+  transform: scale(1.1);
 }
 
 .result {
