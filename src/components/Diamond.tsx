@@ -1,5 +1,5 @@
 import React from 'react';
-import {Base, caughtStealing, steal} from '../store';
+import {Base, moveRunner, recordOut, recordRun, removeRunner} from '../store';
 import {useStore} from '../store';
 
 export default function Diamond() {
@@ -31,6 +31,22 @@ export default function Diamond() {
     [baseRunners]
   );
 
+  const canAdvance = React.useMemo(() => {
+    if (!selectedRunner) {
+      return {};
+    }
+    const result: {[base: number]: boolean} = {};
+    for (let i = selectedRunner; i < 4; i++) {
+      const next = i + 1;
+      if (next === 4 || !baseRunners[next as Base]) {
+        result[next] = true;
+      } else {
+        break;
+      }
+    }
+    return result;
+  }, [selectedRunner, baseRunners]);
+
   return (
     <>
       <div className="diamond-container">
@@ -52,16 +68,44 @@ export default function Diamond() {
       </div>
       <dialog open={!!selectedRunner}>
         <p>Runner on {selectedRunner}B</p>
-        <div>
-          <button onClick={() => selectedRunner && steal(selectedRunner)}>
-            Steal
-          </button>
-          <button
-            onClick={() => selectedRunner && caughtStealing(selectedRunner)}
-          >
-            Caught Stealing
-          </button>
-        </div>
+        {canAdvance[2] && (
+          <div>
+            <button onClick={() => moveRunner(selectedRunner!, 2)}>
+              Advance to 2B
+            </button>
+          </div>
+        )}
+        {canAdvance[3] && (
+          <div>
+            <button onClick={() => moveRunner(selectedRunner!, 3)}>
+              Advance to 3B
+            </button>
+          </div>
+        )}
+        {canAdvance[4] && (
+          <div>
+            <button
+              onClick={() => {
+                removeRunner(selectedRunner!);
+                recordRun();
+              }}
+            >
+              Score
+            </button>
+          </div>
+        )}
+        {selectedRunner && (
+          <div>
+            <button
+              onClick={() => {
+                removeRunner(selectedRunner);
+                recordOut();
+              }}
+            >
+              Make Out on Basepaths
+            </button>
+          </div>
+        )}
       </dialog>
     </>
   );

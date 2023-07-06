@@ -40,8 +40,15 @@ button:focus-visible {
 }
 
 dialog div {
-  display: flex;
-  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+dialog div:last-of-type {
+  margin-bottom: unset;
+}
+
+dialog button {
+  width: 100%;
 }
 
 dialog p {
