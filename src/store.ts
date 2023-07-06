@@ -85,6 +85,10 @@ export const advanceRunnersIfForced = (bases: number) =>
     }
     return newState;
   });
+export const caughtStealing = (base: Base) => {
+  removeRunner(base);
+  recordOut();
+}
 export const endGame = () =>
   useStore.setState((state) => ({...state, gameOver: true}));
 export const endInning = () =>
@@ -145,5 +149,17 @@ export const recordRun = () =>
   });
 export const recordStrike = () =>
   useStore.setState((state) => ({...state, strikes: state.strikes + 1}));
+export const removeRunner = (base: Base) =>
+  useStore.setState((state) => {
+    const newState = {...state};
+    newState.baseRunners[base] = false;
+    return newState;
+  });
 export const resetCount = () =>
   useStore.setState((state) => ({...state, balls: 0, strikes: 0}));
+export const steal = (base: Base) =>
+  useStore.setState((state) => {
+    const newState = {...state};
+    newState.baseRunners = advance(base, newState.baseRunners);
+    return newState;
+  });
