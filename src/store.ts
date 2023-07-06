@@ -107,6 +107,7 @@ export const endInning = () =>
       balls: 0,
       strikes: 0,
       outs: 0,
+      baseRunners: {},
     };
     if (state.top) {
       return {...newState, top: false, homeRuns: [...state.homeRuns, 0]};
