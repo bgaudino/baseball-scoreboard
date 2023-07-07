@@ -1,15 +1,4 @@
-import {
-  advanceRunners,
-  recordBall,
-  recordHit,
-  recordOut,
-  recordStrike,
-} from '../store';
-
-function hit(bases: number) {
-  advanceRunners(bases);
-  recordHit();
-}
+import {batterOut, recordBall, recordStrike, hit} from '../store';
 
 export default function Actions() {
   return (
@@ -19,7 +8,7 @@ export default function Actions() {
         <button onClick={recordBall}>Ball</button>
       </div>
       <div className="actions">
-        <button onClick={recordOut}>Out in Play</button>
+        <button onClick={batterOut}>Out in Play</button>
       </div>
       <div className="actions">
         <button onClick={() => hit(1)}>Single</button>

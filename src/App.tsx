@@ -7,6 +7,7 @@ import Actions from './components/Actions';
 import {endGame, useStore} from './store';
 import useScore from './hooks/useScore';
 import Result from './components/Result';
+import BoxScore from './components/BoxScore';
 
 function App() {
   const gameOver = useStore((state) => state.gameOver);
@@ -27,6 +28,7 @@ function App() {
       <Scoreboard />
       <Count />
       {gameOver ? <Result /> : <Actions />}
+      <BoxScore />
     </>
   );
 }

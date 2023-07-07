@@ -1,19 +1,26 @@
-import React from 'react'
-import { resetCount, recordOut, useStore, endInning, advanceRunnersIfForced } from '../store'
+import React from 'react';
+import {
+  useStore,
+  endInning,
+  batterOut,
+  walk,
+} from '../store';
 
 export default function Count() {
-  const {balls, strikes, outs} = useStore(({balls, strikes, outs}) => ({balls, strikes, outs}));
+  const {balls, strikes, outs} = useStore(({balls, strikes, outs}) => ({
+    balls,
+    strikes,
+    outs,
+  }));
   React.useEffect(() => {
     if (strikes >= 3) {
-      recordOut();
-      resetCount();
+      batterOut();
     }
   }, [strikes]);
 
   React.useEffect(() => {
     if (balls >= 4) {
-      resetCount();
-      advanceRunnersIfForced(1);
+      walk();
     }
   }, [balls]);
 
@@ -21,7 +28,7 @@ export default function Count() {
     if (outs === 3) {
       endInning();
     }
-  }, [outs])
+  }, [outs]);
 
   return (
     <table>
@@ -40,5 +47,5 @@ export default function Count() {
         </tr>
       </tbody>
     </table>
-  )
+  );
 }

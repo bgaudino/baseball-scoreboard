@@ -1,11 +1,21 @@
 import {create} from 'zustand';
 import {sum} from './hooks/useScore';
+import {faker} from '@faker-js/faker';
 
 export type Base = 1 | 2 | 3;
 export type BaseRunners = {1?: boolean; 2?: boolean; 3?: boolean};
+export interface Hitter {
+  name: string;
+  AB: number;
+  H: number;
+}
 export interface GameState {
   awayTeam: string;
   homeTeam: string;
+  awayLineup: Hitter[][];
+  homeLineup: Hitter[][];
+  awayHitter: number;
+  homeHitter: number;
   awayRuns: number[];
   homeRuns: number[];
   awayHits: number;
@@ -21,6 +31,10 @@ export interface GameState {
 export const useStore = create<GameState>(() => ({
   homeTeam: 'HOME',
   awayTeam: 'AWAY',
+  awayLineup: getFakePlayers(9),
+  homeLineup: getFakePlayers(9),
+  awayHitter: 0,
+  homeHitter: 0,
   awayRuns: [0],
   homeRuns: [],
   awayHits: 0,
@@ -37,6 +51,19 @@ export const useStore = create<GameState>(() => ({
   },
   gameOver: false,
 }));
+
+function getFakePlayers(num: number) {
+  const players: Hitter[][] = [];
+  for (let i = 0; i < num; i++) {
+    const player: Hitter = {
+      name: faker.person.lastName(),
+      AB: 0,
+      H: 0,
+    };
+    players.push([player]);
+  }
+  return players;
+}
 
 function advance(base: Base, bases: BaseRunners) {
   if (base > 0) {
@@ -85,6 +112,12 @@ export const advanceRunnersIfForced = (bases: number) =>
     }
     return newState;
   });
+export const batterOut = () => {
+  logOutState();
+  nextHitter();
+  resetCount();
+  recordOut();
+};
 export const endGame = () =>
   useStore.setState((state) => ({...state, gameOver: true}));
 export const endInning = () =>
@@ -119,12 +152,41 @@ export const endInning = () =>
       awayRuns: [...state.awayRuns, 0],
     };
   });
-export const moveRunner = (from: Base, to: Base) => useStore.setState((state) => {  
-  const newState = {...state};
-  newState.baseRunners[from] = false;
-  newState.baseRunners[to] = true;
-  return newState;
-});
+export function hit(bases: number) {
+  advanceRunners(bases);
+  recordHit();
+  logHitState();
+  nextHitter();
+}
+export const logHitState = () =>
+  useStore.setState((state) => {
+    const lineup = state.top ? 'awayLineup' : 'homeLineup';
+    const hitter = state.top ? state.awayHitter : state.homeHitter;
+    const newState = {...state};
+    newState[lineup][hitter][newState[lineup][hitter].length - 1].AB++;
+    newState[lineup][hitter][newState[lineup][hitter].length - 1].H++;
+    return newState;
+  });
+export const logOutState = () =>
+  useStore.setState((state) => {
+    const lineup = state.top ? 'awayLineup' : 'homeLineup';
+    const hitter = state.top ? state.awayHitter : state.homeHitter;
+    const newState = {...state};
+    newState[lineup][hitter][newState[lineup][hitter].length - 1].AB++;
+    return newState;
+  });
+export const moveRunner = (from: Base, to: Base) =>
+  useStore.setState((state) => {
+    const newState = {...state};
+    newState.baseRunners[from] = false;
+    newState.baseRunners[to] = true;
+    return newState;
+  });
+export const nextHitter = () =>
+  useStore.setState((state) => {
+    const key = state.top ? 'awayHitter' : 'homeHitter';
+    return {...state, [key]: (state[key] + 1) % 9};
+  });
 export const recordBall = () =>
   useStore.setState((state) => ({...state, balls: state.balls + 1}));
 export const recordHit = () =>
@@ -159,3 +221,8 @@ export const removeRunner = (base: Base) =>
   });
 export const resetCount = () =>
   useStore.setState((state) => ({...state, balls: 0, strikes: 0}));
+export const walk = () => {
+  resetCount();
+  nextHitter();
+  advanceRunnersIfForced(1);
+};

@@ -87,6 +87,10 @@ th {
   gap: 1rem;
 }
 
+.at-bat {
+  background-color: yellow;
+}
+
 .base {
   height: 16px;
   width: 16px;
