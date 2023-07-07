@@ -62,7 +62,7 @@ export default function RunnerDialog({base}: RunnerProps) {
         <div>
           <button
             onClick={() => {
-              removeRunner(base);
+              removeRunner(base as Base);
               recordOut();
             }}
           >
