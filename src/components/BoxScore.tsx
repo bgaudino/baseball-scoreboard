@@ -1,15 +1,6 @@
 import {Hitter, useStore} from '../store';
+import HittingStats from './HittingStats';
 
-function avg(H: number, AB: number) {
-  if (!AB) {
-    return '-'
-  }
-  const result = (H / AB).toFixed(3).toString();
-  if (result.startsWith('0')) {
-    return result.slice(1)
-  }
-  return result;
-}
 interface LineupProps {
   lineup: Hitter[][];
   atBat: number;
@@ -22,22 +13,22 @@ function Lineup({lineup, atBat}: LineupProps) {
           <th>Name</th>
           <th>AB</th>
           <th>H</th>
+          <th>R</th>
+          <th>RBI</th>
+          <th>BB</th>
+          <th>K</th>
           <th>AVG</th>
+          <th>OPS</th>
         </tr>
       </thead>
       <tbody>
         {lineup.map((players, index) => (
-          <tr
+          <HittingStats
+            name={players[players.length - 1].name}
+            index={index}
+            atBat={atBat}
             key={index}
-            className={index === atBat ? 'at-bat' : ''}
-          >
-            <td>{players[players.length - 1].name}</td>
-            <td>{players[players.length - 1].AB}</td>
-            <td>{players[players.length - 1].H}</td>
-            <td>
-              {avg(players[players.length - 1].H, players[players.length - 1].AB)}
-            </td>
-          </tr>
+          />
         ))}
       </tbody>
     </table>

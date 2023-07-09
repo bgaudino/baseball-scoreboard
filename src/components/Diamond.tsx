@@ -7,7 +7,7 @@ export default function Diamond() {
   const [selectedRunner, setSelectedRunner] = React.useState(0);
   const baseRunners = useStore((state) => state.baseRunners);
   const baseStatus = React.useCallback(
-    (base: Base) => ((baseRunners as any)[base] ? 'taken' : 'empty'),
+    (base: Base) => (baseRunners[base] === undefined ? 'empty' : 'taken'),
     [baseRunners]
   );
 
@@ -25,7 +25,7 @@ export default function Diamond() {
 
   const selectRunner = React.useCallback(
     (runner: Base) => {
-      if (baseRunners[runner]) {
+      if (baseRunners[runner] !== undefined) {
         setSelectedRunner(runner);
       }
     },

@@ -4,6 +4,7 @@ import {
   endInning,
   batterOut,
   walk,
+  logStrikeOutState,
 } from '../store';
 
 export default function Count() {
@@ -14,6 +15,7 @@ export default function Count() {
   }));
   React.useEffect(() => {
     if (strikes >= 3) {
+      logStrikeOutState();
       batterOut();
     }
   }, [strikes]);
