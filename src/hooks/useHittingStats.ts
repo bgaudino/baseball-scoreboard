@@ -1,11 +1,8 @@
-import {useStore} from '../store';
+import {hitterAtLineupPosition, useStore} from '../store';
 
-export default function useHittingStats(lineupPosition: number, top: boolean) {
-  const lineup = useStore((state) =>
-    top ? state.awayLineup : state.homeLineup
-  );
-  const slot = lineup[lineupPosition];
-  const hitter = slot[slot.length - 1];
+export default function useHittingStats(lineupPosition: number) {
+  const state = useStore((state) => state);
+  const hitter = hitterAtLineupPosition(state, lineupPosition);
   const {AB, singles, doubles, triples, homeRuns, BB}  = hitter;
   const H = singles + doubles + triples + homeRuns;
   const AVG = AB > 0 ? H / AB : 0;

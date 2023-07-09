@@ -16,11 +16,23 @@ export interface Hitter {
   BB: number;
   K: number;
 }
+export interface Pitcher {
+  name: string;
+  balls: number;
+  strikes: number;
+  BB: number;
+  K: number;
+  H: number;
+  R: number;
+  outs: number;
+}
 export interface GameState {
   awayTeam: string;
   homeTeam: string;
   awayLineup: Hitter[][];
   homeLineup: Hitter[][];
+  awayPitchers: Pitcher[];
+  homePitchers: Pitcher[];
   awayHitter: number;
   homeHitter: number;
   awayRuns: number[];
@@ -38,8 +50,10 @@ export interface GameState {
 export const useStore = create<GameState>(() => ({
   homeTeam: 'HOME',
   awayTeam: 'AWAY',
-  awayLineup: getFakePlayers(9),
-  homeLineup: getFakePlayers(9),
+  awayLineup: fakeHitters(9),
+  homeLineup: fakeHitters(9),
+  awayPitchers: fakePitchers(1),
+  homePitchers: fakePitchers(1),
   awayHitter: 0,
   homeHitter: 0,
   awayRuns: [0],
@@ -55,7 +69,7 @@ export const useStore = create<GameState>(() => ({
   gameOver: false,
 }));
 
-function getFakePlayers(num: number) {
+function fakeHitters(num: number) {
   const players: Hitter[][] = [];
   for (let i = 0; i < num; i++) {
     const player: Hitter = {
@@ -71,6 +85,24 @@ function getFakePlayers(num: number) {
       K: 0,
     };
     players.push([player]);
+  }
+  return players;
+}
+
+function fakePitchers(num: number) {
+  const players: Pitcher[] = [];
+  for (let i = 0; i < num; i++) {
+    const player: Pitcher = {
+      name: faker.person.lastName(),
+      balls: 0,
+      strikes: 0,
+      outs: 0,
+      BB: 0,
+      K: 0,
+      H: 0,
+      R: 0,
+    };
+    players.push(player);
   }
   return players;
 }
@@ -98,25 +130,23 @@ export const advanceRunners = (bases: number) =>
     );
     const baseRunners: BaseRunners = {};
     const newState = {...state, baseRunners};
-    const lineup = newState.top ? newState.awayLineup : newState.homeLineup;
-
     let runs = 0;
     const batter = state.top ? state.awayHitter : state.homeHitter;
-    for (const [base, lineupIndex] of [[bases, batter], ...currentBaseRunners]) {
+    for (const [base, lineupPosition] of [
+      [bases, batter],
+      ...currentBaseRunners,
+    ]) {
       if (base > 3) {
         runs++;
-        const slot = lineup[lineupIndex];
-        const runner = slot[slot.length - 1];
+        const runner = hitterAtLineupPosition(newState, lineupPosition);
         runner.R++;
       } else {
-        baseRunners[base as Base] = lineupIndex;
+        baseRunners[base as Base] = lineupPosition;
       }
     }
     if (runs > 0) {
-      const lineupIndex = newState.top ? newState.awayHitter : newState.homeHitter;
-      const slot = lineup[lineupIndex];
-      const hitter = slot[slot.length -1 ];
-      hitter.RBI += runs;
+      currentHitter(newState).RBI += runs;
+      currentPitcher(newState).R += runs
       const teamRuns = state.top ? newState.awayRuns : newState.homeRuns;
       teamRuns[state.inning - 1] += runs;
     }
@@ -139,6 +169,16 @@ export const batterOut = () => {
   resetCount();
   recordOut();
 };
+
+export const currentHitter = (state: GameState) => {
+  const slot = state.top ? state.awayLineup[state.awayHitter] : state.homeLineup[state.homeHitter];
+  return slot[slot.length - 1];
+}
+
+export const currentPitcher = (state: GameState) => {
+  const pitchers = state.top ? state.homePitchers : state.awayPitchers;
+  return pitchers[pitchers.length - 1];
+}
 
 export const endGame = () =>
   useStore.setState((state) => ({...state, gameOver: true}));
@@ -183,13 +223,16 @@ export function hit(bases: number) {
   nextHitter();
 }
 
+export function hitterAtLineupPosition(state: GameState, position: number) {
+  const lineup = state.top ? state.awayLineup : state.homeLineup;
+  const slot = lineup[position];
+  return slot[slot.length - 1];
+}
+
 export const logHitState = (bases: number) =>
   useStore.setState((state) => {
-    const lineup = state.top ? 'awayLineup' : 'homeLineup';
-    const lineupIndex = state.top ? state.awayHitter : state.homeHitter;
     const newState = {...state};
-    const slot = newState[lineup][lineupIndex];
-    const hitter = slot[slot.length - 1];
+    const hitter = currentHitter(newState);
     hitter.AB++;
     switch (bases) {
       case 1:
@@ -202,43 +245,42 @@ export const logHitState = (bases: number) =>
         hitter.triples++;
         break;
       case 4:
-        hitter.homeRuns++
+        hitter.homeRuns++;
     }
+    currentPitcher(newState).H++;
+    currentPitcher(newState).strikes++;
     return newState;
   });
 
 export const logOutState = () =>
   useStore.setState((state) => {
-    const lineup = state.top ? 'awayLineup' : 'homeLineup';
-    const hitter = state.top ? state.awayHitter : state.homeHitter;
     const newState = {...state};
-    newState[lineup][hitter][newState[lineup][hitter].length - 1].AB++;
+    currentHitter(newState).AB++;
+    currentPitcher(newState).strikes++;
     return newState;
   });
 
-export const logRunState = (runner: number) =>
+export const logRunState = (lineupPosition: number) =>
   useStore.setState((state) => {
-    const lineup = state.top ? 'awayLineup' : 'homeLineup';
     const newState = {...state};
-    newState[lineup][runner][newState[lineup][runner].length - 1].R++;
+    hitterAtLineupPosition(newState, lineupPosition).R++;
+    currentPitcher(newState).R++;
     return newState;
   });
 
 export const logStrikeOutState = () =>
   useStore.setState((state) => {
-    const lineup = state.top ? 'awayLineup' : 'homeLineup';
-    const hitter = state.top ? state.awayHitter : state.homeHitter;
     const newState = {...state};
-    newState[lineup][hitter][newState[lineup][hitter].length - 1].K++;
+    currentHitter(newState).K++;
+    currentPitcher(newState).K++;
     return newState;
   });
 
 export const logWalkState = () =>
   useStore.setState((state) => {
-    const lineup = state.top ? 'awayLineup' : 'homeLineup';
-    const hitter = state.top ? state.awayHitter : state.homeHitter;
     const newState = {...state};
-    newState[lineup][hitter][newState[lineup][hitter].length - 1].BB++;
+    currentHitter(newState).BB++;
+    currentPitcher(newState).BB++;
     return newState;
   });
 
@@ -257,7 +299,12 @@ export const nextHitter = () =>
   });
 
 export const recordBall = () =>
-  useStore.setState((state) => ({...state, balls: state.balls + 1}));
+  useStore.setState((state) => {
+    const newState = {...state};
+    currentPitcher(newState).balls++;
+    newState.balls++;
+    return newState;
+  });
 
 export const recordHit = () =>
   useStore.setState((state) => {
@@ -270,8 +317,12 @@ export const recordHit = () =>
     return newState;
   });
 
-export const recordOut = () =>
-  useStore.setState((state) => ({...state, outs: state.outs + 1}));
+export const recordOut = () => useStore.setState((state) => {
+  const newState = {...state};
+  currentPitcher(newState).outs++;
+  newState.outs++;
+  return newState;
+});
 
 export const recordRun = () =>
   useStore.setState((state) => {
@@ -285,7 +336,12 @@ export const recordRun = () =>
   });
 
 export const recordStrike = () =>
-  useStore.setState((state) => ({...state, strikes: state.strikes + 1}));
+  useStore.setState((state) => {
+    const newState = {...state};
+    currentPitcher(newState).strikes++;
+    newState.strikes++;
+    return newState
+  });
 
 export const removeRunner = (base: Base) =>
   useStore.setState((state) => {

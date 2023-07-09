@@ -1,5 +1,4 @@
 import useHittingStats from '../hooks/useHittingStats';
-import { useStore } from '../store';
 
 function formatRatioStat(num: number) {
   const result = num.toFixed(3).toString();
@@ -15,8 +14,7 @@ interface HittingStatsProps {
   atBat: number;
 }
 export default function HittingStats({name, index, atBat}: HittingStatsProps) {
-  const top = useStore((state) => state.top);
-  const {AB, H, R, RBI, BB, K, AVG, OPS} = useHittingStats(index, top);
+  const {AB, H, R, RBI, BB, K, AVG, OPS} = useHittingStats(index);
   return (
     <tr key={index} className={index === atBat ? 'at-bat' : ''}>
       <td>{name}</td>
