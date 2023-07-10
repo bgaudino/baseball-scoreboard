@@ -1,4 +1,3 @@
-import React from 'react';
 import useScore from '../hooks/useScore';
 import {useStore} from '../store';
 import TeamName from './TeamName';
