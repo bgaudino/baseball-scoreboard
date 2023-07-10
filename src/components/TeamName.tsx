@@ -15,36 +15,53 @@ export default function TeamName({field}: TeamNameProps) {
   const value = useStore((state) => state[field]);
   const ref = React.useRef<any>();
   React.useEffect(() => {
-    document.addEventListener('click', (e) => {
-      if (![ref.current, ref.current?.firstChild].includes(e.target)) {
-        setEditing(false);
+    function listener(e: MouseEvent) {
+      const target = e.target;
+      const cell = ref.current;
+      if (
+        target instanceof HTMLInputElement ||
+        (target instanceof HTMLElement &&
+          (target === cell || Array.from(cell.children).includes(target)))
+      ) {
+        return;
       }
-    });
-  }, []);
-  React.useEffect(() => {
-    if (editing) {
-      ref.current.firstChild.focus();
+      setEditing(false);
     }
-  }, [editing]);
+    document.addEventListener('click', listener);
+    return () => document.removeEventListener('click', listener);
+  }, []);
+
   return (
     <td
-      onClick={() => setEditing(true)}
       ref={ref}
-      onKeyUp={(e) => {
-        if (e.key === 'Enter') {
-          setEditing(false);
-        }
-      }}
       className="name"
+      style={{
+        display: 'flex',
+        gap: 8,
+        alignItems: 'center',
+      }}
     >
       {editing ? (
-        <input
-          value={value as string}
-          onChange={(e) => setState(e.target.value)}
-        />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            setEditing(false);
+          }}
+        >
+          <input
+            autoFocus
+            value={value as string}
+            onChange={(e) => setState(e.target.value)}
+          />
+        </form>
       ) : (
-        value
+        <span>{value}</span>
       )}
+      <i
+        aria-label={editing ? 'Edit' : 'Done'}
+        className={editing ? 'fa-solid fa-check' : 'fa-solid fa-pen-to-square'}
+        onClick={() => setEditing((prev) => !prev)}
+      />
     </td>
   );
 }
