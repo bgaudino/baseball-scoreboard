@@ -1,8 +1,10 @@
+import React from 'react';
 import useScore from '../hooks/useScore';
 import {useStore} from '../store';
+import TeamName from './TeamName';
 
 export default function Scoreboard() {
-  const {awayTeam, homeTeam, awayRuns, awayHits, homeRuns, homeHits} = useStore(
+  const {awayRuns, awayHits, homeRuns, homeHits} = useStore(
     ({awayTeam, homeTeam, awayRuns, homeRuns, awayHits, homeHits}) => ({
       awayTeam,
       homeTeam,
@@ -29,7 +31,7 @@ export default function Scoreboard() {
       </thead>
       <tbody>
         <tr>
-          <td>{awayTeam}</td>
+          <TeamName field="awayTeam" />
           {[...Array(numInnings).keys()].map((key) => (
             <td key={key}>{awayRuns[key] ?? '-'}</td>
           ))}
@@ -38,7 +40,7 @@ export default function Scoreboard() {
           <td>0</td>
         </tr>
         <tr>
-          <td>{homeTeam}</td>
+          <TeamName field="homeTeam" />
           {[...Array(numInnings).keys()].map((key) => (
             <td key={key}>{homeRuns[key] ?? '-'}</td>
           ))}

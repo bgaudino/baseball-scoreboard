@@ -1,5 +1,5 @@
 import useScore from '../hooks/useScore';
-import {useStore} from '../store';
+import {reset, useStore} from '../store';
 
 function Text() {
   const {awayTotalRuns, homeTotalRuns} = useScore();
@@ -20,10 +20,7 @@ export default function Result() {
         <Text />
       </p>
       <button
-        onClick={() => {
-          // TODO: reset state
-          window.location.reload();
-        }}
+        onClick={reset}
       >
         New Game
       </button>

@@ -17,7 +17,7 @@ export default function HittingStats({name, index, atBat}: HittingStatsProps) {
   const {AB, H, R, RBI, BB, K, AVG, OPS} = useHittingStats(index);
   return (
     <tr key={index} className={index === atBat ? 'at-bat' : ''}>
-      <td>{name}</td>
+      <td className="name">{name}</td>
       <td>{AB}</td>
       <td>{H}</td>
       <td>{R}</td>
