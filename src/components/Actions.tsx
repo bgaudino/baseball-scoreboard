@@ -1,4 +1,4 @@
-import {batterOut, recordBall, recordStrike, hit} from '../store';
+import {batterOut, recordBall, recordStrike, hit, reset} from '../store';
 
 export default function Actions() {
   return (
@@ -15,6 +15,9 @@ export default function Actions() {
         <button onClick={() => hit(2)}>Double</button>
         <button onClick={() => hit(3)}>Triple</button>
         <button onClick={() => hit(4)}>Home Run</button>
+      </div>
+      <div className='actions'>
+        <button onClick={reset}>Reset Game</button>
       </div>
     </div>
   );

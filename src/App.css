@@ -9,3 +9,13 @@
   text-align: left;
   cursor: pointer;
 }
+
+/* Utilities */
+.d-flex {
+  display: flex;
+  flex-basis: 100%;
+}
+
+.d-flex.justify-content-between {
+  justify-content: space-between;
+}

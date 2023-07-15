@@ -31,7 +31,9 @@ export interface GameState {
   awayTeam: string;
   homeTeam: string;
   awayLineup: Hitter[][];
+  awayBench: Hitter[];
   homeLineup: Hitter[][];
+  homeBench: Hitter[];
   awayPitchers: Pitcher[];
   homePitchers: Pitcher[];
   awayHitter: number;
@@ -54,7 +56,9 @@ function getInitialData() {
     homeTeam: 'HOME',
     awayTeam: 'AWAY',
     awayLineup: fakeHitters(9),
+    awayBench: fakeHitters(5).flatMap((player) => player),
     homeLineup: fakeHitters(9),
+    homeBench: fakeHitters(5).flatMap((player) => player),
     awayPitchers: fakePitchers(1),
     homePitchers: fakePitchers(1),
     awayHitter: 0,
@@ -77,7 +81,7 @@ export const useStore = create(
   persist<GameState>(() => getInitialData(), {name: 'game'})
 );
 
-export const reset = () => useStore.setState(getInitialData());;
+export const reset = () => useStore.setState(getInitialData());
 
 function fakeHitters(num: number) {
   const players: Hitter[][] = [];
@@ -241,6 +245,12 @@ export function hitterAtLineupPosition(state: GameState, position: number) {
   return slot[slot.length - 1];
 }
 
+export function hitterAtSlotPosition(state: GameState, lineupPosition: number, slotPosition: number) {
+  const lineup = state.top ? state.awayLineup : state.homeLineup;
+  const slot = lineup[lineupPosition];
+  return slot[slotPosition]; 
+}
+
 export const logHitState = (bases: number) =>
   useStore.setState((state) => {
     const newState = {...state};
@@ -365,6 +375,20 @@ export const removeRunner = (base: Base) =>
 
 export const resetCount = () =>
   useStore.setState((state) => ({...state, balls: 0, strikes: 0}));
+
+export const subHitter = (
+  benchPosition: number,
+  lineupPosition: number,
+  team: 'away' | 'home'
+) =>
+  useStore.setState((state) => {
+    const newState = {...state};
+    const lineup = team === 'away' ? newState.awayLineup : newState.homeLineup;
+    const bench = team === 'away' ? newState.awayBench : newState.homeBench;
+    lineup[lineupPosition].push(bench[benchPosition]);
+    bench.splice(benchPosition, 1);
+    return newState;
+  });
 
 export const walk = () => {
   logWalkState();

@@ -1,6 +1,6 @@
 import usePitchingStats from '../hooks/usePitchingStats';
 
-export default function PitchingStats() {
+export default function Pitcher() {
   const {IP, H, R, BB, K, ERA, WHIP, pitches, name} = usePitchingStats();
   return (
     <table>
