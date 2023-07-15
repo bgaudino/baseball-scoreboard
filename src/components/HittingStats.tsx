@@ -41,7 +41,9 @@ export default function Hitter({
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                subHitter(benchIndex, index, top ? 'away' : 'home');
+                if (benchIndex >= 0) {
+                  subHitter(benchIndex, index, top ? 'away' : 'home');
+                }
                 setSubbing(false);
               }}
               className="d-flex"
@@ -58,7 +60,7 @@ export default function Hitter({
                   </option>
                 ))}
               </select>
-              <button type="submit" disabled={benchIndex === -1}>
+              <button type="submit">
                 <i className="fa-solid fa-check" style={{color: 'green'}} />
               </button>
               <button type="button" onClick={() => setSubbing(false)}>
