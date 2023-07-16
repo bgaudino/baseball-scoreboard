@@ -34,9 +34,9 @@ export default function RunnerDialog({base}: RunnerProps) {
     return result;
   }, [base, baseRunners]);
   const runner = React.useMemo(() => {
-    const lineupIndex = baseRunners[base as Base];
-    if (lineupIndex !== undefined) {
-      const slot = lineup[lineupIndex];
+    const baseRunner = baseRunners[base as Base];
+    if (baseRunner !== undefined) {
+      const slot = lineup[baseRunner.runner];
       return slot[slot.length - 1].name;
     }
     return ''

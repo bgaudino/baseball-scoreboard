@@ -4,7 +4,8 @@ import {faker} from '@faker-js/faker';
 import {persist} from 'zustand/middleware';
 
 export type Base = 1 | 2 | 3;
-export type BaseRunners = {1?: number; 2?: number; 3?: number};
+export type BaseRunner = {runner: number; pitcherResponsible: number};
+export type BaseRunners = {1?: BaseRunner; 2?: BaseRunner; 3?: BaseRunner};
 export interface Hitter {
   name: string;
   AB: number;
@@ -35,7 +36,11 @@ export interface GameState {
   homeLineup: Hitter[][];
   homeBench: Hitter[];
   awayPitchers: Pitcher[];
+  awayPitcher: number;
+  awayBullpen: Pitcher[];
   homePitchers: Pitcher[];
+  homePitcher: number;
+  homeBullpen: Pitcher[];
   awayHitter: number;
   homeHitter: number;
   awayRuns: number[];
@@ -60,7 +65,11 @@ function getInitialData() {
     homeLineup: fakeHitters(9),
     homeBench: fakeHitters(5).flatMap((player) => player),
     awayPitchers: fakePitchers(1),
+    awayBullpen: fakePitchers(10),
+    awayPitcher: 0,
     homePitchers: fakePitchers(1),
+    homeBullpen: fakePitchers(10),
+    homePitcher: 0,
     awayHitter: 0,
     homeHitter: 0,
     awayRuns: [0],
@@ -121,16 +130,16 @@ function fakePitchers(num: number) {
   return players;
 }
 
-function advance(base: Base, runner: number, bases: BaseRunners) {
+function advance(base: Base, runner: BaseRunner, bases: BaseRunners) {
   if (base > 0) {
-    delete bases[runner as Base];
+    delete bases[runner.runner as Base];
   }
   const next = (base + 1) as Base;
   if (next >= 4) {
     recordRun();
   } else {
     if (bases[next]) {
-      bases = advance(next, bases[next] as number, bases);
+      bases = advance(next, bases[next]!, bases);
     }
     bases[next] = runner;
   }
@@ -139,28 +148,37 @@ function advance(base: Base, runner: number, bases: BaseRunners) {
 
 export const advanceRunners = (bases: number) =>
   useStore.setState((state) => {
-    const currentBaseRunners = Object.entries(state.baseRunners).map(
+    type Runner = [number, BaseRunner];
+    const currentBaseRunners: Runner[] = Object.entries(state.baseRunners).map(
       ([base, runner]) => [Number(base) + bases, runner]
     );
     const baseRunners: BaseRunners = {};
     const newState = {...state, baseRunners};
     let runs = 0;
-    const batter = state.top ? state.awayHitter : state.homeHitter;
-    for (const [base, lineupPosition] of [
-      [bases, batter],
+    const runner = state.top ? state.awayHitter : state.homeHitter;
+    const pitcherResponsible = state.top
+      ? state.homePitcher
+      : state.awayPitcher;
+    for (const [base, baseRunner] of [
+      [bases, {runner, pitcherResponsible}],
       ...currentBaseRunners,
-    ]) {
-      if (base > 3) {
+    ] as Runner[]) {
+      if ((base as number) > 3) {
         runs++;
-        const runner = hitterAtLineupPosition(newState, lineupPosition);
+        const runner = hitterAtLineupPosition(
+          newState,
+          baseRunner.runner
+        );
         runner.R++;
+        const pitchers = state.top ? state.homePitchers : state.awayPitchers;
+        const pitcher = pitchers[baseRunner.pitcherResponsible];
+        pitcher.R++;
       } else {
-        baseRunners[base as Base] = lineupPosition;
+        baseRunners[base as Base] = baseRunner;
       }
     }
     if (runs > 0) {
       currentHitter(newState).RBI += runs;
-      currentPitcher(newState).R += runs;
       const teamRuns = state.top ? newState.awayRuns : newState.homeRuns;
       teamRuns[state.inning - 1] += runs;
     }
@@ -170,7 +188,10 @@ export const advanceRunners = (bases: number) =>
 export const advanceRunnersIfForced = (bases: number) =>
   useStore.setState((state) => {
     const newState = {...state};
-    const runner = state.top ? state.awayHitter : state.homeHitter;
+    const runner = {
+      runner: state.top ? state.awayHitter : state.homeHitter,
+      pitcherResponsible: state.top ? state.homePitcher : state.awayPitcher,
+    };
     for (let i = 0; i < bases; i++) {
       newState.baseRunners = advance(i as Base, runner, newState.baseRunners);
     }
@@ -245,10 +266,14 @@ export function hitterAtLineupPosition(state: GameState, position: number) {
   return slot[slot.length - 1];
 }
 
-export function hitterAtSlotPosition(state: GameState, lineupPosition: number, slotPosition: number) {
+export function hitterAtSlotPosition(
+  state: GameState,
+  lineupPosition: number,
+  slotPosition: number
+) {
   const lineup = state.top ? state.awayLineup : state.homeLineup;
   const slot = lineup[lineupPosition];
-  return slot[slotPosition]; 
+  return slot[slotPosition];
 }
 
 export const logHitState = (bases: number) =>
@@ -282,11 +307,12 @@ export const logOutState = () =>
     return newState;
   });
 
-export const logRunState = (lineupPosition: number) =>
+export const logRunState = (runner: BaseRunner) =>
   useStore.setState((state) => {
     const newState = {...state};
-    hitterAtLineupPosition(newState, lineupPosition).R++;
-    currentPitcher(newState).R++;
+    hitterAtLineupPosition(newState, runner.runner).R++;
+    const pitchers = newState.top ? newState.homePitchers : newState.awayPitchers;
+    pitchers[runner.pitcherResponsible].R++;
     return newState;
   });
 
@@ -387,6 +413,20 @@ export const subHitter = (
     const bench = team === 'away' ? newState.awayBench : newState.homeBench;
     lineup[lineupPosition].push(bench[benchPosition]);
     bench.splice(benchPosition, 1);
+    return newState;
+  });
+
+export const subPitcher = (
+  bullpenPosition: number,
+  team: 'away' | 'home'
+) =>
+  useStore.setState((state) => {
+    const newState = {...state};
+    const pitchers = team === 'away' ? newState.awayPitchers : newState.homePitchers;
+    const bullpen = team === 'away' ? newState.awayBullpen : newState.homeBullpen;
+    pitchers.push(bullpen[bullpenPosition]);
+    bullpen.splice(bullpenPosition, 1);
+    newState[`${team}Pitcher`]++;
     return newState;
   });
 

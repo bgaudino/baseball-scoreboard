@@ -13,9 +13,14 @@
 /* Utilities */
 .d-flex {
   display: flex;
+  align-items: center;
   flex-basis: 100%;
 }
 
 .d-flex.justify-content-between {
   justify-content: space-between;
+}
+
+i {
+  cursor: pointer;
 }

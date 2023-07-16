@@ -1,8 +1,6 @@
-import {currentPitcher, useStore} from '../store';
+import {Pitcher} from '../store';
 
-export default function usePitchingStats() {
-  const state = useStore((state) => state);
-  const pitcher = currentPitcher(state);
+export default function usePitchingStats(pitcher: Pitcher) {
   const {outs, balls, strikes, BB, H, R} = pitcher;
   const innings = Math.floor(outs / 3);
   const extraOuts = outs % 3;
